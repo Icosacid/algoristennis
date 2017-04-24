@@ -65,6 +65,7 @@ App.move = function() {
 	for (var i = 0; i < this.particles.length; i++) {
 		var particle = this.particles[i];
 		particle.y -= 4;
+		particle.x += Math.round(-5 + 10 * Math.random());
 		if (particle.y < 0) this.kill(particle.name);
 	}
 };
@@ -82,7 +83,7 @@ App.draw = function() {
 		// Draw particle
 		this.ctx.beginPath();
 		this.ctx.arc(particle.x, particle.y, rParticle, 0, 2 * Math.PI, false);
-		this.ctx.strokeStyle = 'hsla(' + hue + ', 70%, 50%, 1)';
+		this.ctx.strokeStyle = 'hsla(' + hue + ', 70%, 50%, 0.5)';
 		this.ctx.stroke();
 	}
 };
