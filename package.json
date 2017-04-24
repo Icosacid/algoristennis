@@ -1,0 +1,23 @@
+{
+  "name": "algoristennis",
+  "version": "1.0.0",
+  "description": "The start of something huge! And pretty.",
+  "main": "index.html",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://Icosacid@gitlab.com/Icosacid/algoristennis.git"
+  },
+  "author": "Nik Rowell & Alexandre Andrieux",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://gitlab.com/Icosacid/algoristennis/issues"
+  },
+  "homepage": "https://gitlab.com/Icosacid/algoristennis#README",
+  "dependencies": {
+    "jquery": "^3.2.1",
+    "underscore": "^1.8.3"
+  }
+}
