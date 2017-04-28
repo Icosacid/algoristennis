@@ -8,14 +8,29 @@ var App = {};
 
 Math.TWO_PI = Math.PI * 2;
 
+// not worried about namespacing or global variables here :)
+
+var settings = {};
+settings.stepLimit = 300;
+settings.baseHue = Math.round(Math.random() * 360);
+
+function lerp(norm, min, max) {
+	return min + norm * (max - min);
+}
+
 jQuery(document).ready(function() {
 	// Setup canvas and app
 	App.setup();
+	console.log(settings);
 	
 	// Launch animation loop
 	App.frame = function() {
 		App.update();
-		App.frame.handle = window.requestAnimationFrame(App.frame);
+		// stop (for now) at an aesthetically cool spot. 
+		// Probably makes more sense in update() as we continue to layer things on 
+		if(App.stepCount < settings.stepLimit) {
+			App.frame.handle = window.requestAnimationFrame(App.frame);
+		}
 	};
 	App.frame();
 });
@@ -29,7 +44,7 @@ App.setup = function() {
 	
 	// Append to DOM
 	document.body.appendChild(canvas);
-	document.body.addEventListener('click', App.click.bind(App));
+	document.body.addEventListener('click', App.click.bind(this));
 	
 	// Attach canvas context and dimensions to App
 	this.ctx = canvas.getContext('2d');
@@ -49,15 +64,6 @@ App.setup = function() {
 	// Initial birth
 	this.birth();
 };
-App.click = function(event) {
-	console.log(this.stepCount);
-	if(App.frame.handle) {
-		window.cancelAnimationFrame(App.frame.handle);
-		App.frame.handle = null;
-	} else {
-		App.frame();
-	}
-};
 App.update = function() {
 	// Evolve system
 	this.evolve();
@@ -68,7 +74,6 @@ App.update = function() {
 };
 App.evolve = function() {
 	this.stepCount++;
-	
 	// Simple periodic birth
 	if (this.stepCount % this.birthPeriod == 0 && this.particles.length < this.maxPop) this.birth();
 };
@@ -100,13 +105,8 @@ App.draw = function() {
 };
 App.birth = function() {
 
-	var angle = Math.random() * Math.TWO_PI;
-	// a little variance to start points along the circle
-	var radius = 75 + Math.random() * 50;
-	
 	var particle = new Particle({
-		x: Math.cos(angle) * radius,
-		y: Math.sin(angle) * radius,
+		angle: Math.random() * Math.TWO_PI,
 		name: 'particle' + this.stepCount
 	});
 
@@ -117,4 +117,13 @@ App.kill = function(particleName) {
 	this.particles = _(this.particles).reject(function(particle) {
 		return (particle.name == particleName);
 	});
+};
+App.click = function(event) {
+	console.log(this.stepCount);
+	if(App.frame.handle) {
+		window.cancelAnimationFrame(App.frame.handle);
+		App.frame.handle = null;
+	} else {
+		App.frame();
+	}
 };
