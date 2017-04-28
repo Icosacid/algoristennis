@@ -1,10 +1,12 @@
 /**
  * JS for Algoristennis
- * @authors Alexandre Andrieux <alex@icosacid.com>, Nik Rowell <are.you.cool.with.adding@your.email?>
+ * @authors Alexandre Andrieux <alex@icosacid.com>, Nik Rowell <nik@nikrowell.com>
  * @since 2017-04
  */
 
 var App = {};
+
+Math.TWO_PI = Math.PI * 2;
 
 jQuery(document).ready(function() {
 	// Setup canvas and app
@@ -13,7 +15,7 @@ jQuery(document).ready(function() {
 	// Launch animation loop
 	App.frame = function() {
 		App.update();
-		window.requestAnimationFrame(App.frame);
+		App.frame.handle = window.requestAnimationFrame(App.frame);
 	};
 	App.frame();
 });
@@ -27,15 +29,15 @@ App.setup = function() {
 	
 	// Append to DOM
 	document.body.appendChild(canvas);
+	document.body.addEventListener('click', App.click.bind(App));
 	
 	// Attach canvas context and dimensions to App
 	this.ctx = canvas.getContext('2d');
 	this.width = canvas.width;
 	this.height = canvas.height;
-
+	
 	// Define a few useful elements
 	this.stepCount = 0;
-	this.hasUserClicked = false;
 	this.xC = canvas.width / 2;
 	this.yC = canvas.height / 2;
 	
@@ -46,6 +48,15 @@ App.setup = function() {
 
 	// Initial birth
 	this.birth();
+};
+App.click = function(event) {
+	console.log(this.stepCount);
+	if(App.frame.handle) {
+		window.cancelAnimationFrame(App.frame.handle);
+		App.frame.handle = null;
+	} else {
+		App.frame();
+	}
 };
 App.update = function() {
 	// Evolve system
@@ -64,43 +75,41 @@ App.evolve = function() {
 App.move = function() {
 	for (var i = 0; i < this.particles.length; i++) {
 		var particle = this.particles[i];
-		particle.y -= 4;
-		particle.x += Math.round(-5 + 10 * Math.random());
-		if (particle.y < 0) this.kill(particle.name);
+		particle.update();
+
+		if (particle.dead) {
+			this.kill(particle.name);
+		}
 	}
 };
 App.draw = function() {
+
+	// move origin to center stage and 
+	// use additive blending, very nice!
+	this.ctx.save();
+	this.ctx.translate(this.xC, this.yC);
+	this.ctx.globalCompositeOperation = 'lighter';
+	
 	// Draw all particles
 	for (var i = 0; i < this.particles.length; i++) {
 		var particle = this.particles[i];
-		
-		// Particle size
-		var rParticle = Math.floor(20 * Math.random());
-		
-		// Particle color
-		var hue = 180 + 30 * Math.random();
-		
-		// Draw particle
-		this.ctx.beginPath();
-		this.ctx.arc(particle.x, particle.y, rParticle, 0, 2 * Math.PI, false);
-		this.ctx.strokeStyle = 'hsla(' + hue + ', 70%, 50%, 0.5)';
-		this.ctx.stroke();
+		particle.draw(this.ctx);
 	}
+
+	this.ctx.restore();
 };
 App.birth = function() {
-	var x = this.width * Math.random();
-	var y = this.height * Math.random();
+
+	var angle = Math.random() * Math.TWO_PI;
+	// a little variance to start points along the circle
+	var radius = 75 + Math.random() * 50;
 	
-	var particle = {
-		x: x,
-		y: y,
-		xLast: x,
-		yLast: y,
-		xSpeed: 0,
-		ySpeed: 0,
+	var particle = new Particle({
+		x: Math.cos(angle) * radius,
+		y: Math.sin(angle) * radius,
 		name: 'particle' + this.stepCount
-	};
-	
+	});
+
 	this.particles.push(particle);
 };
 App.kill = function(particleName) {
