@@ -1,8 +1,6 @@
 
 function Particle(options) {
 	
-	options || (options = {});
-
 	// a little variance to start points along the circle
 	var radius = 75 + Math.random() * 50;
 	var angle = options.angle;
@@ -13,10 +11,10 @@ function Particle(options) {
 	this.vx = this.x * 0.01;
 	this.vy = this.y * 0.01;
 
-	// limit to a range of hues, mapped to half a sine wave 
-	// to get a smooth gradient instead of an abrupt change
+	// limit to a range of hues, mapped to a sine wave to
+	// get a smooth gradient instead of an abrupt change
 	// is this right?... is there a better way to do this?
-	this.hue = lerp(Math.sin(angle / 2), settings.baseHue, settings.baseHue + 40);
+	this.hue = settings.hueBase + Math.sin(angle + settings.hueShift) * 15;
 }
 
 Particle.prototype = {
@@ -35,7 +33,7 @@ Particle.prototype = {
 	draw: function(ctx) {
 
 		var rParticle = Math.floor(20 * Math.random());
-		var alpha = Math.random() * 0.2;
+		var alpha = Math.random() * 0.25;
 
 		// Draw particle
 		ctx.beginPath();

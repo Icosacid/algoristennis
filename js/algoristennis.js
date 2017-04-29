@@ -9,29 +9,28 @@ var App = {};
 Math.TWO_PI = Math.PI * 2;
 
 // not worried about namespacing or global variables here :)
-
 var settings = {};
-settings.stepLimit = 300;
-settings.baseHue = Math.round(Math.random() * 360);
+// randomize the hue we base the particle color range on
+// and randomize the start position of that range
+settings.hueBase = Math.random() * 360;
+settings.hueShift = Math.random() * Math.TWO_PI;
 
-function lerp(norm, min, max) {
-	return min + norm * (max - min);
-}
+console.log(settings);
 
 jQuery(document).ready(function() {
 	// Setup canvas and app
 	App.setup();
-	console.log(settings);
 	
 	// Launch animation loop
 	App.frame = function() {
 		App.update();
 		// stop (for now) at an aesthetically cool spot. 
 		// Probably makes more sense in update() as we continue to layer things on 
-		if(App.stepCount < settings.stepLimit) {
+		if(App.stepCount < 300) {
 			App.frame.handle = window.requestAnimationFrame(App.frame);
 		}
 	};
+
 	App.frame();
 });
 
