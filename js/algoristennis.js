@@ -86,13 +86,18 @@ App.move = function() {
 	}
 };
 App.draw = function() {
-
+	// Trace effect
+	this.ctx.beginPath();
+	this.ctx.rect(0, 0, this.width, this.height);
+	this.ctx.fillStyle = 'rgba(0, 0, 0, 0.10)';
+	this.ctx.fill();
+	
 	// move origin to center stage and 
 	// use additive blending, very nice!
 	// Alex: Yup
 	this.ctx.save();
 	this.ctx.translate(this.xC, this.yC);
-	this.ctx.globalCompositeOperation = 'lighter';
+	//this.ctx.globalCompositeOperation = 'lighter';
 	
 	// Draw all particles
 	for (var i = 0; i < this.particles.length; i++) {
@@ -104,6 +109,8 @@ App.draw = function() {
 };
 App.birth = function(xStart, yStart) {
 
+	if (this.particles.length > this.maxPop) return;
+	
 	var particle = particle || new Particle({
 		name: 'particle-' + this.stepCount + '-' + Math.round(10000 * Math.random()),
 		angle: Math.random() * Math.TWO_PI,
