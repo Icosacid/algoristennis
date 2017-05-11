@@ -16,6 +16,7 @@ var settings = {};
 settings.hueBase = Math.random() * 360;
 settings.hueShift = Math.random() * Math.TWO_PI;
 settings.maturityAge = 50;
+settings.viscosity = 0.05;
 
 jQuery(document).ready(function() {
 	// Setup canvas and app
@@ -87,17 +88,15 @@ App.move = function() {
 };
 App.draw = function() {
 	// Trace effect
-	this.ctx.beginPath();
+	/*this.ctx.beginPath();
 	this.ctx.rect(0, 0, this.width, this.height);
 	this.ctx.fillStyle = 'rgba(0, 0, 0, 0.10)';
-	this.ctx.fill();
+	this.ctx.fill();*/
 	
-	// move origin to center stage and 
-	// use additive blending, very nice!
-	// Alex: Yup
+	// Move origin to center stage
 	this.ctx.save();
 	this.ctx.translate(this.xC, this.yC);
-	//this.ctx.globalCompositeOperation = 'lighter';
+	this.ctx.globalCompositeOperation = 'lighter';
 	
 	// Draw all particles
 	for (var i = 0; i < this.particles.length; i++) {

@@ -13,14 +13,11 @@ function Particle(options) {
 	this.x = this.xStart + radius * Math.cos(angle);
 	this.y = this.yStart + radius * Math.sin(angle);
 	
+	// Send the particles straight away from birthpoint
 	var speed = 5;
 	this.vx = speed * Math.cos(angle);
 	this.vy = speed * Math.sin(angle);
 
-	// limit to a range of hues, mapped to a sine wave to
-	// get a smooth gradient instead of an abrupt change
-	// is this right?... is there a better way to do this?
-	// Alex: Totally fine
 	this.hue = settings.hueBase + Math.sin(angle + settings.hueShift) * 15;
 }
 
@@ -28,6 +25,9 @@ Particle.prototype = {
 	
 	update: function(t) {
 
+		// Move particle
+		this.vx -= this.vx * settings.viscosity;
+		this.vy -= this.vy * settings.viscosity;
 		this.x += this.vx;
 		this.y += this.vy;
 
@@ -45,21 +45,23 @@ Particle.prototype = {
 		// Reproduce and die when old enough
 		if (this.age >= settings.maturityAge) {
 			this.dead = true;
-			// Give birth to 2 particles right where you die
+			// Give birth to 1 or 2 particles right where you die
 			App.birth(this.x, this.y);
-			App.birth(this.x, this.y);
+			if (Math.random() > 0.9) App.birth(this.x, this.y);
 		}
 	},
 
 	draw: function(ctx) {
 
-		var rParticle = Math.floor(20 * Math.random());
-		var alpha = Math.random() * 1;
+		var rParticle = this.age;
+		var alpha = Math.random() * 0.8;
 
 		// Draw particle
 		ctx.beginPath();
 		ctx.arc(this.x, this.y, rParticle, 0, Math.TWO_PI, false);
-		ctx.strokeStyle = 'hsla(' + this.hue + ', 70%, 50%, ' + alpha + ')';
+		var hue = this.hue + this.age;
+		var sat = 70 - this.age / 2;
+		ctx.strokeStyle = 'hsla(' + hue + ', ' + sat + '%, 50%, ' + alpha + ')';
 		ctx.stroke();
 	}
 };
