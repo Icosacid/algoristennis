@@ -9,13 +9,14 @@ var App = {};
 Math.TWO_PI = Math.PI * 2;
 
 // not worried about namespacing or global variables here :)
+// Alex: Indeed
 var settings = {};
 // randomize the hue we base the particle color range on
 // and randomize the start position of that range
 settings.hueBase = Math.random() * 360;
 settings.hueShift = Math.random() * Math.TWO_PI;
-
-console.log(settings);
+settings.maturityAge = 50;
+settings.viscosity = 0.05;
 
 jQuery(document).ready(function() {
 	// Setup canvas and app
@@ -26,7 +27,7 @@ jQuery(document).ready(function() {
 		App.update();
 		// stop (for now) at an aesthetically cool spot. 
 		// Probably makes more sense in update() as we continue to layer things on 
-		if(App.stepCount < 300) {
+		if(App.stepCount < 3000) {
 			App.frame.handle = window.requestAnimationFrame(App.frame);
 		}
 	};
@@ -57,7 +58,6 @@ App.setup = function() {
 	
 	// Particles!
 	this.particles = [];
-	this.birthPeriod = 5;
 	this.maxPop = 50;
 
 	// Initial birth
@@ -73,8 +73,8 @@ App.update = function() {
 };
 App.evolve = function() {
 	this.stepCount++;
-	// Simple periodic birth
-	if (this.stepCount % this.birthPeriod == 0 && this.particles.length < this.maxPop) this.birth();
+	// Rarely give birth to a particle spontaneously
+	if (Math.random() > 0.999 && this.particles.length < this.maxPop) this.birth();
 };
 App.move = function() {
 	for (var i = 0; i < this.particles.length; i++) {
@@ -87,9 +87,13 @@ App.move = function() {
 	}
 };
 App.draw = function() {
-
-	// move origin to center stage and 
-	// use additive blending, very nice!
+	// Trace effect
+	/*this.ctx.beginPath();
+	this.ctx.rect(0, 0, this.width, this.height);
+	this.ctx.fillStyle = 'rgba(0, 0, 0, 0.10)';
+	this.ctx.fill();*/
+	
+	// Move origin to center stage
 	this.ctx.save();
 	this.ctx.translate(this.xC, this.yC);
 	this.ctx.globalCompositeOperation = 'lighter';
@@ -102,11 +106,15 @@ App.draw = function() {
 
 	this.ctx.restore();
 };
-App.birth = function() {
+App.birth = function(xStart, yStart) {
 
-	var particle = new Particle({
+	if (this.particles.length > this.maxPop) return;
+	
+	var particle = particle || new Particle({
+		name: 'particle-' + this.stepCount + '-' + Math.round(10000 * Math.random()),
 		angle: Math.random() * Math.TWO_PI,
-		name: 'particle' + this.stepCount
+		xStart: xStart || 0,
+		yStart: yStart || 0
 	});
 
 	this.particles.push(particle);
@@ -123,6 +131,7 @@ App.click = function(event) {
 		window.cancelAnimationFrame(App.frame.handle);
 		App.frame.handle = null;
 	} else {
+		// Alex: Cool! I was surprised when I clicked and saw new circles appear
 		App.frame();
 	}
 };
