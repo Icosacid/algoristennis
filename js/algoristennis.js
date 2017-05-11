@@ -45,7 +45,8 @@ App.setup = function() {
 	canvas.id = 'ourcanvas';
     canvas.width = w * scale;
     canvas.height = h * scale;
-    canvas.style.cssText = 'width:100%;height:100%;';
+    canvas.style.width = w + 'px';
+    canvas.style.height = h + 'px';
 	
 	// Append to DOM
 	document.body.appendChild(canvas);
