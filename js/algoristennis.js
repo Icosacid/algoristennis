@@ -37,10 +37,15 @@ jQuery(document).ready(function() {
 
 App.setup = function() {
 	// Setup canvas and get canvas context
-	var canvas = document.createElement('canvas');
-	canvas.height = window.innerHeight;
-	canvas.width = window.innerWidth;
+	var canvas = document.createElement('canvas'),
+        scale = window.devicePixelRatio || 1,
+        w = window.innerWidth,
+        h = window.innerHeight;
+
 	canvas.id = 'ourcanvas';
+    canvas.width = w * scale;
+    canvas.height = h * scale;
+    canvas.style.cssText = 'width:100%;height:100%;';
 	
 	// Append to DOM
 	document.body.appendChild(canvas);
@@ -48,13 +53,14 @@ App.setup = function() {
 	
 	// Attach canvas context and dimensions to App
 	this.ctx = canvas.getContext('2d');
-	this.width = canvas.width;
-	this.height = canvas.height;
+    this.ctx.scale(scale, scale);
+	this.width = w;
+	this.height = h;
 	
 	// Define a few useful elements
 	this.stepCount = 0;
-	this.xC = canvas.width / 2;
-	this.yC = canvas.height / 2;
+	this.xC = this.width / 2;
+	this.yC = this.height / 2;
 	
 	// Particles!
 	this.particles = [];
