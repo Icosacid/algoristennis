@@ -9,13 +9,12 @@ var App = {};
 Math.TWO_PI = Math.PI * 2;
 
 // not worried about namespacing or global variables here :)
+// Alex: Indeed
 var settings = {};
 // randomize the hue we base the particle color range on
 // and randomize the start position of that range
 settings.hueBase = Math.random() * 360;
 settings.hueShift = Math.random() * Math.TWO_PI;
-
-console.log(settings);
 
 jQuery(document).ready(function() {
 	// Setup canvas and app
@@ -90,6 +89,7 @@ App.draw = function() {
 
 	// move origin to center stage and 
 	// use additive blending, very nice!
+	// Alex: Yup
 	this.ctx.save();
 	this.ctx.translate(this.xC, this.yC);
 	this.ctx.globalCompositeOperation = 'lighter';
@@ -105,8 +105,10 @@ App.draw = function() {
 App.birth = function() {
 
 	var particle = new Particle({
+		name: 'particle' + this.stepCount,
 		angle: Math.random() * Math.TWO_PI,
-		name: 'particle' + this.stepCount
+		xStart: 0,
+		yStart: 0
 	});
 
 	this.particles.push(particle);
@@ -123,6 +125,7 @@ App.click = function(event) {
 		window.cancelAnimationFrame(App.frame.handle);
 		App.frame.handle = null;
 	} else {
+		// Alex: Cool! I was surprised when I clicked and saw new circles appear
 		App.frame();
 	}
 };
