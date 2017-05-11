@@ -6,15 +6,16 @@ function Particle(options) {
 	this.yStart = options.yStart;
 	this.age = 0;
 	
-	// Circular birth with random radius
-	var radius = 75 + Math.random() * 50;
+	// Circular birth at a random distance
+	var radius = 25 + 25 * Math.random();
 	var angle = options.angle;
 
-	this.x = Math.cos(angle) * radius;
-	this.y = Math.sin(angle) * radius;
-	var speedBoost = 1 + 5 * Math.random();
-	this.vx = speedBoost * this.x * 0.1;
-	this.vy = speedBoost * this.y * 0.1;
+	this.x = this.xStart + radius * Math.cos(angle);
+	this.y = this.yStart + radius * Math.sin(angle);
+	
+	var speed = 5;
+	this.vx = speed * Math.cos(angle);
+	this.vy = speed * Math.sin(angle);
 
 	// limit to a range of hues, mapped to a sine wave to
 	// get a smooth gradient instead of an abrupt change
@@ -34,10 +35,20 @@ Particle.prototype = {
 		// need to use center values since we're using a translated context
 		if(this.y < -App.yC || this.y > App.yC || this.x < -App.xC || this.x > App.xC) {
 			this.dead = true;
+			// Give birth to a new particle at the center of the canvas
+			App.birth();
 		}
 		
 		// Particle gets older
 		this.age++;
+		
+		// Reproduce and die when old enough
+		if (this.age >= settings.maturityAge) {
+			this.dead = true;
+			// Give birth to 2 particles right where you die
+			App.birth(this.x, this.y);
+			App.birth(this.x, this.y);
+		}
 	},
 
 	draw: function(ctx) {

@@ -15,6 +15,7 @@ var settings = {};
 // and randomize the start position of that range
 settings.hueBase = Math.random() * 360;
 settings.hueShift = Math.random() * Math.TWO_PI;
+settings.maturityAge = 50;
 
 jQuery(document).ready(function() {
 	// Setup canvas and app
@@ -25,7 +26,7 @@ jQuery(document).ready(function() {
 		App.update();
 		// stop (for now) at an aesthetically cool spot. 
 		// Probably makes more sense in update() as we continue to layer things on 
-		if(App.stepCount < 300) {
+		if(App.stepCount < 3000) {
 			App.frame.handle = window.requestAnimationFrame(App.frame);
 		}
 	};
@@ -56,7 +57,6 @@ App.setup = function() {
 	
 	// Particles!
 	this.particles = [];
-	this.birthPeriod = 5;
 	this.maxPop = 50;
 
 	// Initial birth
@@ -72,8 +72,8 @@ App.update = function() {
 };
 App.evolve = function() {
 	this.stepCount++;
-	// Simple periodic birth
-	if (this.stepCount % this.birthPeriod == 0 && this.particles.length < this.maxPop) this.birth();
+	// Rarely give birth to a particle spontaneously
+	if (Math.random() > 0.999 && this.particles.length < this.maxPop) this.birth();
 };
 App.move = function() {
 	for (var i = 0; i < this.particles.length; i++) {
@@ -102,13 +102,13 @@ App.draw = function() {
 
 	this.ctx.restore();
 };
-App.birth = function() {
+App.birth = function(xStart, yStart) {
 
-	var particle = new Particle({
-		name: 'particle' + this.stepCount,
+	var particle = particle || new Particle({
+		name: 'particle-' + this.stepCount + '-' + Math.round(10000 * Math.random()),
 		angle: Math.random() * Math.TWO_PI,
-		xStart: 0,
-		yStart: 0
+		xStart: xStart || 0,
+		yStart: yStart || 0
 	});
 
 	this.particles.push(particle);
