@@ -18,7 +18,7 @@ settings.hueShift = Math.random() * Math.TWO_PI;
 settings.maturityAge = 50;
 settings.viscosity = 0.05;
 
-jQuery(document).ready(function() {
+window.addEventListener('DOMContentLoaded', function() {
 	// Setup canvas and app
 	App.setup();
 	
@@ -70,6 +70,7 @@ App.setup = function() {
 	// Initial birth
 	this.birth();
 };
+
 App.update = function() {
 	// Evolve system
 	this.evolve();
@@ -78,27 +79,29 @@ App.update = function() {
 	// Draw particles
 	this.draw();
 };
+
 App.evolve = function() {
 	this.stepCount++;
 	// Rarely give birth to a particle spontaneously
 	if (Math.random() > 0.999 && this.particles.length < this.maxPop) this.birth();
 };
+
 App.move = function() {
+
+    // remove all dead particles from previous frame 
+    // before looping through again doing calculations
+    // this also removes the underscore dependency
+    this.particles = this.particles.filter(function(p) {
+        return !p.dead;
+    });
+
 	for (var i = 0; i < this.particles.length; i++) {
 		var particle = this.particles[i];
 		particle.update();
-
-		if (particle.dead) {
-			this.kill(particle.name);
-		}
 	}
 };
+
 App.draw = function() {
-	// Trace effect
-	/*this.ctx.beginPath();
-	this.ctx.rect(0, 0, this.width, this.height);
-	this.ctx.fillStyle = 'rgba(0, 0, 0, 0.10)';
-	this.ctx.fill();*/
 	
 	// Move origin to center stage
 	this.ctx.save();
@@ -113,12 +116,12 @@ App.draw = function() {
 
 	this.ctx.restore();
 };
+
 App.birth = function(xStart, yStart) {
 
 	if (this.particles.length > this.maxPop) return;
 	
 	var particle = particle || new Particle({
-		name: 'particle-' + this.stepCount + '-' + Math.round(10000 * Math.random()),
 		angle: Math.random() * Math.TWO_PI,
 		xStart: xStart || 0,
 		yStart: yStart || 0
@@ -126,12 +129,7 @@ App.birth = function(xStart, yStart) {
 
 	this.particles.push(particle);
 };
-App.kill = function(particleName) {
-	// Remove a particle from array based on its name attribute, which is expected
-	this.particles = _(this.particles).reject(function(particle) {
-		return (particle.name == particleName);
-	});
-};
+
 App.click = function(event) {
 	console.log(this.stepCount);
 	if(App.frame.handle) {
