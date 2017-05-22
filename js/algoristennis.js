@@ -14,7 +14,9 @@ var settings = {};
 settings.hueBase = Math.random() * 360;
 settings.hueShift = Math.random() * Math.TWO_PI;
 settings.maturityAge = 50;
+settings.blurLayerPeriod = 100;
 settings.viscosity = 0.05;
+settings.maxFrames = 1500;
 
 var birthPoints = [];
 
@@ -68,13 +70,17 @@ App.frame = function() {
     this.draw();
     this.frame.handle = window.requestAnimationFrame(this.frame);
 
-    if(this.stepCount == 500) {
+    if(this.stepCount % settings.blurLayerPeriod == 0) {
 
         // this feels hacky, but it's kinda cool...
         // We're adding a blur layer to create some depth from what's been drawn
         // This could potentially be done with getImageData / putImageData
         // but don't think that would allow changing alpha of the blur layer
         // when drawing it back onto the onscreen canvas.
+		// Alex -> I believe it is possible as each pixel has RGBA values,
+		// so you would have to for-loop (i += 4) on the image data
+		// (and set alphas to ~150, as I think I remember it's 255-based)
+		// But yeah it's painful. This solution you wrote below is cool.
 
         // Managing these layering effects might be easier with something like
         // http://www.createjs.com/easeljs or http://www.pixijs.com/ where there
@@ -89,7 +95,7 @@ App.frame = function() {
 
         // draw the source canvas onto our temp canvas and blur it
         blurContext.drawImage(srcCanvas, 0, 0, window.innerWidth, window.innerHeight);
-        StackBlur.canvasRGBA(blurCanvas, 0, 0, srcCanvas.width, srcCanvas.height, 25);
+        StackBlur.canvasRGBA(blurCanvas, 0, 0, srcCanvas.width, srcCanvas.height, 5);
 
         this.ctx.clearRect(0, 0, srcCanvas.width, srcCanvas.height);
         this.ctx.globalAlpha = 0.75;
@@ -115,14 +121,16 @@ App.frame = function() {
 
         // start somethng else at the center mass, regenerate a particle layer?
         this.ctx.beginPath();
-        this.ctx.arc(mean.x, mean.y, 100, 0, Math.TWO_PI);
-        this.ctx.fillStyle = 'rgba(255,255,255,0.25)';
+        this.ctx.arc(mean.x, mean.y, 10, 0, Math.TWO_PI);
+        this.ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
         this.ctx.fill();
-
-        window.cancelAnimationFrame(this.frame.handle);
+		// Yeah. Kill everyone and rebirth at the average point
+		// I don't bother seeting particle.dead to true for all, I just clear the array
+		this.particles = [];
+		this.birth(mean.x - this.xC, mean.y - this.yC);
     }
 
-    if(this.stepCount == 1000) {
+    if(this.stepCount == settings.maxFrames) {
         window.cancelAnimationFrame(this.frame.handle);
     }
 
@@ -150,7 +158,7 @@ App.draw = function() {
 	// Move origin to center stage
 	this.ctx.save();
 	this.ctx.translate(this.xC, this.yC);
-	this.ctx.globalCompositeOperation = 'lighter';
+	//this.ctx.globalCompositeOperation = 'lighter';
 
 	// Draw all particles
 	for (var i = 0; i < this.particles.length; i++) {
