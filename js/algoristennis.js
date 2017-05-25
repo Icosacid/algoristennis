@@ -4,7 +4,8 @@
  * @since 2017-04
  */
 
-var App = {};
+var App = {},
+	Tools = {};
 
 Math.TWO_PI = Math.PI * 2;
 
@@ -15,7 +16,9 @@ settings.hueBase = Math.random() * 360;
 settings.hueShift = Math.random() * Math.TWO_PI;
 settings.maturityAge = 25;
 settings.blurLayerPeriod = 3 * (settings.maturityAge - 1);
-settings.viscosity = 0.005;
+settings.viscosity = 0.002;
+settings.springStiffness = 0.001;
+settings.particleBirthSpeed = 7;
 settings.maxFrames = 2500;
 
 var birthPoints = [];
@@ -161,6 +164,8 @@ App.draw = function() {
 	this.ctx.save();
 	this.ctx.translate(this.xC, this.yC);
 	//this.ctx.globalCompositeOperation = 'lighter';
+	this.ctx.shadowBlur = 5;
+	this.ctx.shadowColor = 'white';
 
 	// Draw all particles
 	for (var i = 0; i < this.particles.length; i++) {
@@ -171,16 +176,50 @@ App.draw = function() {
 	this.ctx.restore();
 };
 
-App.birth = function(xStart, yStart) {
+App.birth = function(xStart, yStart, angle) {
 
 	if (this.particles.length > this.maxPop) return;
 
 	var particle = particle || new Particle({
-		angle: Math.random() * Math.TWO_PI,
+		angle: angle || Math.random() * Math.TWO_PI,
 		xStart: xStart || 0,
 		yStart: yStart || 0
 	});
 
 	this.particles.push(particle);
     birthPoints.push({x: particle.xStart, y: particle.yStart});
+};
+
+// Alex -> 'tis a function I wrote a long time ago to get angles from X and Y coords. I think it works.
+/**
+ * @param {Number} Xstart X value of the segment starting point
+ * @param {Number} Ystart Y value of the segment starting point
+ * @param {Number} Xtarget X value of the segment target point
+ * @param {Number} Ytarget Y value of the segment target point
+ * @param {Boolean} realOrWeb true if Real (Y towards top), false if Web (Y towards bottom)
+ * @returns {Number} Angle between 0 and 2PI
+ */
+Tools.segmentAngleRad = function(Xstart, Ystart, Xtarget, Ytarget, realOrWeb) {
+	var result;// Will range between 0 and 2PI
+	if (Xstart == Xtarget) {
+		if (Ystart == Ytarget) {
+			result = 0; 
+		} else if (Ystart < Ytarget) {
+			result = Math.PI/2;
+		} else if (Ystart > Ytarget) {
+			result = 3*Math.PI/2;
+		} else {}
+	} else if (Xstart < Xtarget) {
+		result = Math.atan((Ytarget - Ystart) / (Xtarget - Xstart));
+	} else if (Xstart > Xtarget) {
+		result = Math.PI + Math.atan((Ytarget - Ystart) / (Xtarget - Xstart));
+	}
+	
+	result = (result + 2*Math.PI) % (2*Math.PI);
+	
+	if (!realOrWeb) {
+		result = 2*Math.PI - result;
+	}
+	
+	return result;
 };
