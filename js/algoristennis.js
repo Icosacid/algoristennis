@@ -13,10 +13,10 @@ var settings = {};
 // and randomize the start position of that range
 settings.hueBase = Math.random() * 360;
 settings.hueShift = Math.random() * Math.TWO_PI;
-settings.maturityAge = 50;
-settings.blurLayerPeriod = 100;
-settings.viscosity = 0.05;
-settings.maxFrames = 1500;
+settings.maturityAge = 25;
+settings.blurLayerPeriod = 3 * (settings.maturityAge - 1);
+settings.viscosity = 0.005;
+settings.maxFrames = 2500;
 
 var birthPoints = [];
 
@@ -48,7 +48,7 @@ App.setup = function() {
 	this.width = w;
 	this.height = h;
 
-    this.ctx.fillStyle = '#111';
+    this.ctx.fillStyle = 'black';
     this.ctx.fillRect(0, 0, canvas.width, canvas.height);
 
 	// Define a few useful elements
@@ -62,13 +62,11 @@ App.setup = function() {
 
 	// Initial birth
 	this.birth();
+	this.birth();
+	this.birth();
 };
 
 App.frame = function() {
-
-    this.update();
-    this.draw();
-    this.frame.handle = window.requestAnimationFrame(this.frame);
 
     if(this.stepCount % settings.blurLayerPeriod == 0) {
 
@@ -97,10 +95,10 @@ App.frame = function() {
         blurContext.drawImage(srcCanvas, 0, 0, window.innerWidth, window.innerHeight);
         StackBlur.canvasRGBA(blurCanvas, 0, 0, srcCanvas.width, srcCanvas.height, 5);
 
+        // Trying to smaller the saved image to create depth effects
+        var depthSpeed = 0.05;
         this.ctx.clearRect(0, 0, srcCanvas.width, srcCanvas.height);
-        this.ctx.globalAlpha = 0.75;
-        this.ctx.drawImage(blurCanvas, 0, 0);
-        this.ctx.globalAlpha = 1;
+        this.ctx.drawImage(blurCanvas, depthSpeed * srcCanvas.width, depthSpeed * srcCanvas.height, (1 - 2 * depthSpeed) * srcCanvas.width, (1 - 2 * depthSpeed) * srcCanvas.height);
 
         // calculate mean birth point
         // maybe the translated canvas makes everything a little more confusing (see particle ~line 35 :)
@@ -126,13 +124,17 @@ App.frame = function() {
         this.ctx.fill();
 		// Yeah. Kill everyone and rebirth at the average point
 		// I don't bother seeting particle.dead to true for all, I just clear the array
-		this.particles = [];
-		this.birth(mean.x - this.xC, mean.y - this.yC);
+		//this.particles = [];
+		//this.birth(mean.x - this.xC, mean.y - this.yC);
     }
 
     if(this.stepCount == settings.maxFrames) {
         window.cancelAnimationFrame(this.frame.handle);
     }
+	
+    this.update();
+    this.draw();
+    this.frame.handle = window.requestAnimationFrame(this.frame);
 
 }.bind(App);
 
