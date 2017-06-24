@@ -4,7 +4,8 @@
  * @since 2017-04
  */
 
-var App = {};
+var App = {},
+	Tools = {};
 
 Math.TWO_PI = Math.PI * 2;
 
@@ -13,8 +14,12 @@ var settings = {};
 // and randomize the start position of that range
 settings.hueBase = Math.random() * 360;
 settings.hueShift = Math.random() * Math.TWO_PI;
-settings.maturityAge = 50;
-settings.viscosity = 0.05;
+settings.maturityAge = 25;
+settings.blurLayerPeriod = 3 * (settings.maturityAge - 1);
+settings.viscosity = 0.002;
+settings.springStiffness = 0.001;
+settings.particleBirthSpeed = 7;
+settings.maxFrames = 2500;
 
 var birthPoints = [];
 
@@ -46,7 +51,7 @@ App.setup = function() {
 	this.width = w;
 	this.height = h;
 
-    this.ctx.fillStyle = '#111';
+    this.ctx.fillStyle = 'black';
     this.ctx.fillRect(0, 0, canvas.width, canvas.height);
 
 	// Define a few useful elements
@@ -60,21 +65,23 @@ App.setup = function() {
 
 	// Initial birth
 	this.birth();
+	this.birth();
+	this.birth();
 };
 
 App.frame = function() {
 
-    this.update();
-    this.draw();
-    this.frame.handle = window.requestAnimationFrame(this.frame);
-
-    if(this.stepCount == 500) {
+    if(this.stepCount % settings.blurLayerPeriod == 0) {
 
         // this feels hacky, but it's kinda cool...
         // We're adding a blur layer to create some depth from what's been drawn
         // This could potentially be done with getImageData / putImageData
         // but don't think that would allow changing alpha of the blur layer
         // when drawing it back onto the onscreen canvas.
+		// Alex -> I believe it is possible as each pixel has RGBA values,
+		// so you would have to for-loop (i += 4) on the image data
+		// (and set alphas to ~150, as I think I remember it's 255-based)
+		// But yeah it's painful. This solution you wrote below is cool.
 
         // Managing these layering effects might be easier with something like
         // http://www.createjs.com/easeljs or http://www.pixijs.com/ where there
@@ -89,12 +96,12 @@ App.frame = function() {
 
         // draw the source canvas onto our temp canvas and blur it
         blurContext.drawImage(srcCanvas, 0, 0, window.innerWidth, window.innerHeight);
-        StackBlur.canvasRGBA(blurCanvas, 0, 0, srcCanvas.width, srcCanvas.height, 25);
+        StackBlur.canvasRGBA(blurCanvas, 0, 0, srcCanvas.width, srcCanvas.height, 5);
 
+        // Trying to smaller the saved image to create depth effects
+        var depthSpeed = 0.05;
         this.ctx.clearRect(0, 0, srcCanvas.width, srcCanvas.height);
-        this.ctx.globalAlpha = 0.75;
-        this.ctx.drawImage(blurCanvas, 0, 0);
-        this.ctx.globalAlpha = 1;
+        this.ctx.drawImage(blurCanvas, depthSpeed * srcCanvas.width, depthSpeed * srcCanvas.height, (1 - 2 * depthSpeed) * srcCanvas.width, (1 - 2 * depthSpeed) * srcCanvas.height);
 
         // calculate mean birth point
         // maybe the translated canvas makes everything a little more confusing (see particle ~line 35 :)
@@ -115,16 +122,22 @@ App.frame = function() {
 
         // start somethng else at the center mass, regenerate a particle layer?
         this.ctx.beginPath();
-        this.ctx.arc(mean.x, mean.y, 100, 0, Math.TWO_PI);
-        this.ctx.fillStyle = 'rgba(255,255,255,0.25)';
+        this.ctx.arc(mean.x, mean.y, 10, 0, Math.TWO_PI);
+        this.ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
         this.ctx.fill();
-
-        window.cancelAnimationFrame(this.frame.handle);
+		// Yeah. Kill everyone and rebirth at the average point
+		// I don't bother seeting particle.dead to true for all, I just clear the array
+		//this.particles = [];
+		//this.birth(mean.x - this.xC, mean.y - this.yC);
     }
 
-    if(this.stepCount == 1000) {
+    if(this.stepCount == settings.maxFrames) {
         window.cancelAnimationFrame(this.frame.handle);
     }
+	
+    this.update();
+    this.draw();
+    this.frame.handle = window.requestAnimationFrame(this.frame);
 
 }.bind(App);
 
@@ -150,7 +163,9 @@ App.draw = function() {
 	// Move origin to center stage
 	this.ctx.save();
 	this.ctx.translate(this.xC, this.yC);
-	this.ctx.globalCompositeOperation = 'lighter';
+	//this.ctx.globalCompositeOperation = 'lighter';
+	this.ctx.shadowBlur = 5;
+	this.ctx.shadowColor = 'white';
 
 	// Draw all particles
 	for (var i = 0; i < this.particles.length; i++) {
@@ -161,16 +176,50 @@ App.draw = function() {
 	this.ctx.restore();
 };
 
-App.birth = function(xStart, yStart) {
+App.birth = function(xStart, yStart, angle) {
 
 	if (this.particles.length > this.maxPop) return;
 
 	var particle = particle || new Particle({
-		angle: Math.random() * Math.TWO_PI,
+		angle: angle || Math.random() * Math.TWO_PI,
 		xStart: xStart || 0,
 		yStart: yStart || 0
 	});
 
 	this.particles.push(particle);
     birthPoints.push({x: particle.xStart, y: particle.yStart});
+};
+
+// Alex -> 'tis a function I wrote a long time ago to get angles from X and Y coords. I think it works.
+/**
+ * @param {Number} Xstart X value of the segment starting point
+ * @param {Number} Ystart Y value of the segment starting point
+ * @param {Number} Xtarget X value of the segment target point
+ * @param {Number} Ytarget Y value of the segment target point
+ * @param {Boolean} realOrWeb true if Real (Y towards top), false if Web (Y towards bottom)
+ * @returns {Number} Angle between 0 and 2PI
+ */
+Tools.segmentAngleRad = function(Xstart, Ystart, Xtarget, Ytarget, realOrWeb) {
+	var result;// Will range between 0 and 2PI
+	if (Xstart == Xtarget) {
+		if (Ystart == Ytarget) {
+			result = 0; 
+		} else if (Ystart < Ytarget) {
+			result = Math.PI/2;
+		} else if (Ystart > Ytarget) {
+			result = 3*Math.PI/2;
+		} else {}
+	} else if (Xstart < Xtarget) {
+		result = Math.atan((Ytarget - Ystart) / (Xtarget - Xstart));
+	} else if (Xstart > Xtarget) {
+		result = Math.PI + Math.atan((Ytarget - Ystart) / (Xtarget - Xstart));
+	}
+	
+	result = (result + 2*Math.PI) % (2*Math.PI);
+	
+	if (!realOrWeb) {
+		result = 2*Math.PI - result;
+	}
+	
+	return result;
 };
